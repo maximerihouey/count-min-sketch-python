@@ -1,19 +1,38 @@
 import numpy as np
 from collections import defaultdict
 import matplotlib.pyplot as plt
+import random
+
+# Classes
+class HashFunction:
+    def __init__(self, a, b, size_hash_function):
+        self._a = a
+        self._b = b
+        self._size_hash_function = size_hash_function
+
+    def hash(self, element):
+        return (((hash(element) + self._a) % self._size_hash_function) + self._b) % self._size_hash_function
 
 class countMinSketch:
     def __init__(self, size_hash_function, number_hash_functions):
-        self._size_hash_function = size_hash_function
-        self._number_hash_functions = number_hash_functions
+        self._hash_functions = [new_hash_function(size_hash_function) for _ in range(number_hash_functions)]
         self._count_min_sketch = defaultdict(lambda : 0)
 
     def update(self, element):
-        self._count_min_sketch[hash(element) % self._size_hash_function] += 1
+        for hash_function in self._hash_functions:
+            self._count_min_sketch[hash_function.hash(element)] += 1
 
     def get(self, element):
-        return self._count_min_sketch[hash(element) % self._size_hash_function]
+        return min([self._count_min_sketch[hash_function.hash(element)] for hash_function in self._hash_functions])
 
+# Helpers
+def new_hash_function(size_hash_function):
+    a, b = random.randint(1, size_hash_function), random.randint(1, size_hash_function)
+    print '=>', a, b, size_hash_function
+    return HashFunction(a, b, size_hash_function)
+#    return HashFunction(1, 0, size_hash_function)
+
+# Script
 f = open('data.txt')
 actual = defaultdict(lambda : 0)
 elements = []
@@ -23,9 +42,9 @@ for line in f:
 f.close()
 
 # Count-Min-Sketch
-number_hash_functions = 1
+number_hash_functions = 2
 results = []
-for size_hash_function in range(1, 100):
+for size_hash_function in range(1, 21):
     count_min_sketch = countMinSketch(size_hash_function, number_hash_functions)
     for element in elements:
         count_min_sketch.update(element)
